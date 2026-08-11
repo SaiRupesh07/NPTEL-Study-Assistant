@@ -7,13 +7,18 @@ import {
   Alert,
   Spinner,
   Row,
-  Col
+  Col,
 } from "react-bootstrap";
 import {
   Cpu,
   ArrowLeft,
-  PlayCircle
+  PlayCircle,
 } from "react-feather";
+
+// Backend API URL
+// Local:  http://127.0.0.1:8000
+// Render: https://your-backend.onrender.com
+const API_URL = import.meta.env.VITE_API_URL;
 
 const courseTopics = {
   "cloud-computing": [
@@ -24,7 +29,7 @@ const courseTopics = {
     "Resource Management",
     "Cloud Security",
     "Load Balancing",
-    "Distributed Systems"
+    "Distributed Systems",
   ],
 
   "computer-networks": [
@@ -35,7 +40,7 @@ const courseTopics = {
     "Network Security",
     "IP Addressing",
     "Congestion Control",
-    "Application Layer"
+    "Application Layer",
   ],
 
   "data-analytics": [
@@ -46,7 +51,7 @@ const courseTopics = {
     "Statistics",
     "Probability",
     "Machine Learning",
-    "Data Preprocessing"
+    "Data Preprocessing",
   ],
 
   "affective-computing": [
@@ -57,21 +62,21 @@ const courseTopics = {
     "Human Computer Interaction",
     "Emotion Models",
     "Physiological Signals",
-    "Multimodal Emotion Recognition"
-  ]
+    "Multimodal Emotion Recognition",
+  ],
 };
 
 const courseTitles = {
   "cloud-computing": "Cloud Computing",
   "computer-networks": "Computer Networks & Protocols",
   "data-analytics": "Data Analytics with Python",
-  "affective-computing": "Affective Computing"
+  "affective-computing": "Affective Computing",
 };
 
 const AIQuiz = ({
   selectedCourse,
   onStartQuiz,
-  onBack
+  onBack,
 }) => {
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("medium");
@@ -87,35 +92,54 @@ const AIQuiz = ({
       return;
     }
 
+    if (!API_URL) {
+      setError(
+        "API URL is not configured. Please check your VITE_API_URL environment variable."
+      );
+      return;
+    }
+
     setError("");
     setLoading(true);
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/generate-quiz",
+        `${API_URL}/api/generate-quiz`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             course: courseTitles[selectedCourse],
             topic: topic,
             difficulty: difficulty,
-            number_of_questions: Number(numberOfQuestions)
-          })
+            number_of_questions: Number(numberOfQuestions),
+          }),
         }
       );
 
-      const data = await response.json();
+      let data;
 
-      if (!response.ok) {
+      try {
+        data = await response.json();
+      } catch {
         throw new Error(
-          data.detail || "Failed to generate quiz."
+          "The server returned an invalid response."
         );
       }
 
-      if (!data.questions || data.questions.length === 0) {
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || "Failed to generate quiz."
+        );
+      }
+
+      if (
+        !data ||
+        !Array.isArray(data.questions) ||
+        data.questions.length === 0
+      ) {
         throw new Error("AI returned no questions.");
       }
 
@@ -123,14 +147,14 @@ const AIQuiz = ({
         mode: "ai",
         questions: data.questions,
         selectedTopic: topic,
-        difficulty: difficulty
+        difficulty: difficulty,
       });
-
     } catch (err) {
-      console.error(err);
+      console.error("AI Quiz Generation Error:", err);
+
       setError(
-        err.message ||
-        "Something went wrong while generating the quiz."
+        err?.message ||
+          "Something went wrong while generating the quiz. Please try again."
       );
     } finally {
       setLoading(false);
@@ -140,7 +164,7 @@ const AIQuiz = ({
   return (
     <Container className="py-4">
       <Card className="shadow-sm border-0">
-
+        {/* Header */}
         <Card.Header className="bg-primary bg-opacity-10 py-3">
           <div className="d-flex align-items-center">
             <Cpu
@@ -160,8 +184,8 @@ const AIQuiz = ({
           </div>
         </Card.Header>
 
+        {/* Body */}
         <Card.Body className="p-4">
-
           <div className="text-center mb-4">
             <h5>
               Generate a personalized quiz
@@ -173,6 +197,7 @@ const AIQuiz = ({
             </p>
           </div>
 
+          {/* Error */}
           {error && (
             <Alert
               variant="danger"
@@ -184,9 +209,8 @@ const AIQuiz = ({
           )}
 
           <Row className="g-4">
-
+            {/* Topic */}
             <Col xs={12}>
-
               <Form.Group>
                 <Form.Label>
                   <strong>Select Topic</strong>
@@ -194,7 +218,9 @@ const AIQuiz = ({
 
                 <Form.Select
                   value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
+                  onChange={(e) =>
+                    setTopic(e.target.value)
+                  }
                   disabled={loading}
                 >
                   <option value="">
@@ -202,17 +228,19 @@ const AIQuiz = ({
                   </option>
 
                   {topics.map((item) => (
-                    <option key={item} value={item}>
+                    <option
+                      key={item}
+                      value={item}
+                    >
                       {item}
                     </option>
                   ))}
                 </Form.Select>
               </Form.Group>
-
             </Col>
 
+            {/* Difficulty */}
             <Col xs={12} md={6}>
-
               <Form.Group>
                 <Form.Label>
                   <strong>Difficulty</strong>
@@ -238,36 +266,48 @@ const AIQuiz = ({
                   </option>
                 </Form.Select>
               </Form.Group>
-
             </Col>
 
+            {/* Number of Questions */}
             <Col xs={12} md={6}>
-
               <Form.Group>
                 <Form.Label>
-                  <strong>Number of Questions</strong>
+                  <strong>
+                    Number of Questions
+                  </strong>
                 </Form.Label>
 
                 <Form.Select
                   value={numberOfQuestions}
                   onChange={(e) =>
-                    setNumberOfQuestions(e.target.value)
+                    setNumberOfQuestions(
+                      e.target.value
+                    )
                   }
                   disabled={loading}
                 >
-                  <option value="5">5 Questions</option>
-                  <option value="10">10 Questions</option>
-                  <option value="15">15 Questions</option>
-                  <option value="20">20 Questions</option>
+                  <option value="5">
+                    5 Questions
+                  </option>
+
+                  <option value="10">
+                    10 Questions
+                  </option>
+
+                  <option value="15">
+                    15 Questions
+                  </option>
+
+                  <option value="20">
+                    20 Questions
+                  </option>
                 </Form.Select>
               </Form.Group>
-
             </Col>
-
           </Row>
 
+          {/* Buttons */}
           <div className="d-flex justify-content-between mt-4">
-
             <Button
               variant="outline-secondary"
               onClick={onBack}
@@ -307,9 +347,7 @@ const AIQuiz = ({
                 </>
               )}
             </Button>
-
           </div>
-
         </Card.Body>
       </Card>
     </Container>
