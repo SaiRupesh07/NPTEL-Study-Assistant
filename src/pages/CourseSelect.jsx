@@ -86,7 +86,7 @@ const CourseSelect = ({ onCourseSelect }) => {
       <footer className="py-3 bg-white border-top">
         <Container>
           <p className="text-center text-muted mb-0 small">
-            Made with <span className="text-danger">❤️</span> by <strong>Sai Ganesh Reddy</strong>
+            Made with <span className="text-danger">❤️</span> by <strong>Devarinti Sai Rupesh</strong>
           </p>
         </Container>
       </footer>
