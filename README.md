@@ -222,10 +222,6 @@ NIT Patna — 2026 Graduate
 
 This repository represents my implementation, development work, and continued maintenance of the NPTEL Study Assistant.
 
-## 📄 License
-
-This project is released under the MIT License.
-
 ---
 
 ⭐ If you find this project useful, consider giving the repository a star.
